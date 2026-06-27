@@ -1,0 +1,11 @@
+# 运行时生成
+market_save.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.vscode/
+.idea/
