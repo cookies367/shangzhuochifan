@@ -43,11 +43,20 @@ from market_data import (
     PLAYER_SKILLS,
     MARKET_DISASTERS,
     ITEM_SENSE_PREP,
-    RECIPE_DISCOVERIES,
-    DAY_END_EVENTS,
 )
 from market_quality import QUALITY_DESC, TRAP_TRUTH
 from market_recipes import RECIPES
+
+# 以下可能在market_data里没有定义，给空默认
+try:
+    from market_data import RECIPE_DISCOVERIES
+except ImportError:
+    RECIPE_DISCOVERIES = []
+
+try:
+    from market_data import DAY_END_EVENTS
+except ImportError:
+    DAY_END_EVENTS = []
 
 def _save_dir():
     """获取存档目录——兼容exec环境"""
