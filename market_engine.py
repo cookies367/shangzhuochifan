@@ -74,15 +74,15 @@ KITCHEN_DEFAULTS = [
     {"name": "水", "quality": "ok", "qty": 1},
 ]
 
-# ---- PRNG (确定性) ----
+# ---- PRNG (跟钓鱼游戏一样，确定性) ----
 
 def mulberry32(seed):
     def _next():
         nonlocal seed
         seed = (seed + 0x6D2B79F5) & 0xFFFFFFFF
         t = seed
-        t = ((t ^ (t >> 15)) * t) & 0xFFFFFFFF
-        t = ((t ^ (t >> 15)) * t) & 0xFFFFFFFF
+        t = ((t ^ (t >> 15)) * t | 1) & 0xFFFFFFFF
+        t = ((t ^ (t >> 15)) * t | 1) & 0xFFFFFFFF
         t = (t ^ (t >> 15)) & 0xFFFFFFFF
         return t
     return _next
@@ -169,12 +169,68 @@ class MarketGame:
 
     SAVE_VERSION = 9
 
+    @staticmethod
+    def _set_to_list(obj):
+        """递归把set转list，确保JSON可序列化。"""
+        if isinstance(obj, set):
+            return sorted(obj, key=str)
+        if isinstance(obj, dict):
+            return {k: MarketGame._set_to_list(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [MarketGame._set_to_list(x) for x in obj]
+        return obj
+
+    @staticmethod
+    def _restore_sets_in_ks(obj):
+        """kitchen_state里的set字段还原。处理两种格式：list和{'__t':'set','v':list}。"""
+        _SET_KEYS = {"completed_steps", "completed_optional", "_on_board", "discovered_recipes"}
+        if isinstance(obj, dict):
+            # __t标记格式
+            if obj.get('__t') == 'set':
+                return set(obj.get('v', []))
+            result = {}
+            for k, v in obj.items():
+                if k in _SET_KEYS:
+                    if isinstance(v, list):
+                        result[k] = set(v)
+                    elif isinstance(v, dict) and v.get('__t') == 'set':
+                        result[k] = set(v.get('v', []))
+                    else:
+                        result[k] = MarketGame._restore_sets_in_ks(v)
+                else:
+                    result[k] = MarketGame._restore_sets_in_ks(v)
+            return result
+        if isinstance(obj, list):
+            return [MarketGame._restore_sets_in_ks(x) for x in obj]
+        return obj
+
     def save(self):
+        # basket: 去掉actual_yield（预处理副作用，load时重新算）
+        basket_clean = []
+        for item in self.basket:
+            item2 = {k: v for k, v in item.items() if k != "actual_yield"}
+            basket_clean.append(item2)
+
+        # kitchen_state: set→list（递归）
+        ks_serialized = self._set_to_list(self.kitchen_state) if self.kitchen_state else None
+
         data = {
             "save_version": self.SAVE_VERSION,
             "seed": self.seed,
             "day": self.day,
             "fridge": self.fridge,
+            "basket": basket_clean,
+            "kitchen_state": ks_serialized,
+            "done": self.done,
+            "current_stall": self.current_stall,
+            "current_zone": self.current_zone,
+            "market_time": self.market_time,
+            "market_time_max": self.market_time_max,
+            "market_closed": self._market_closed,
+            "closed_stalls": list(self.closed_stalls),
+            "sold_out": {k: list(v) for k, v in self.sold_out.items()},
+            "budget": self.budget,
+            "spent": self.spent,
             "visit_count": self.visit_count,
             "cook_history": self.cook_history,
             "achievements": self.achievements,
@@ -213,36 +269,6 @@ class MarketGame:
             "player_skills": getattr(self, "player_skills", {"刀工": 0, "火候": 0, "识货": 0}),
             "dish_feedback": getattr(self, "dish_feedback", {}),
             "dish_history": getattr(self, "dish_history", {}),
-            # ── 当天运行时状态（跨进程恢复用） ──
-            "rt_basket": self.basket,
-            "rt_budget": self.budget,
-            "rt_spent": self.spent,
-            "rt_market_time": self.market_time,
-            "rt_market_time_max": self.market_time_max,
-            "rt_current_stall": self.current_stall,
-            "rt_time_of_day": self.time_of_day,
-            "rt_weather": self.weather,
-            "rt_season": self.season,
-            "rt_sold_out": {k: list(v) for k, v in self.sold_out.items()},
-            "rt_closed_stalls": list(self.closed_stalls),
-            "rt_inspected_items": self.inspected_items,
-            "rt_disaster_id": self._today_disaster.get("id") if self._today_disaster else None,
-            "rt_no_weight_trick": self.no_weight_trick,
-            "rt_neighbor_conflict": self._neighbor_conflict,
-            "rt_roof_leaking": self._roof_leaking,
-            "rt_max_carry": self._max_carry,
-            "rt_last_stall": self._last_stall,
-            "rt_market_closed": self._market_closed,
-            "rt_rare_boost": self._rare_boost_today,
-            "rt_season_day": getattr(self, '_season_day', 1),
-            "rt_season_ending": getattr(self, '_season_ending', False),
-            "rt_journey_shown": self._journey_shown,
-            "rt_journey_text": self._journey_text,
-            "rt_done": self.done,
-            "rt_kitchen_state": self.kitchen_state,
-            "rt_cooking_log": self.cooking_log,
-            "rt_plate": self.plate,
-            "rt_rng_state": self.rng.__closure__[0].cell_contents,
         }
         with open(SAVE_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
@@ -297,12 +323,38 @@ class MarketGame:
             data.setdefault("player_skills", {"刀工": 0, "火候": 0, "识货": 0})
             data["save_version"] = 8
         if version < 9:
-            # v8→v9: 新增当天运行时状态（跨进程恢复）
-            data.setdefault("rt_basket", [])
+            # v8→v9: basket/kitchen_state/done + 每日状态纳入存档
+            data.setdefault("basket", [])
+            data.setdefault("kitchen_state", None)
+            data.setdefault("done", False)
+            data.setdefault("current_stall", None)
+            data.setdefault("current_zone", None)
+            data.setdefault("market_time", 0)
+            data.setdefault("market_time_max", 0)
+            data.setdefault("market_closed", False)
+            data.setdefault("closed_stalls", [])
+            data.setdefault("sold_out", {})
+            data.setdefault("budget", 0)
+            data.setdefault("spent", 0)
+            # stats里的冗余字段清掉——只保留纯统计
             data["save_version"] = 9
         self.seed = data.get("seed", 0)
         self.day = data.get("day", 0)
         self.fridge = data.get("fridge", [])
+        self.basket = data.get("basket", [])
+        # kitchen_state: list→set 还原
+        ks_raw = data.get("kitchen_state")
+        self.kitchen_state = self._restore_sets_in_ks(ks_raw) if ks_raw else None
+        self.done = data.get("done", False)
+        self.current_stall = data.get("current_stall")
+        self.current_zone = data.get("current_zone")
+        self.market_time = data.get("market_time", 0)
+        self.market_time_max = data.get("market_time_max", 0)
+        self._market_closed = data.get("market_closed", False)
+        self.closed_stalls = set(data.get("closed_stalls", []))
+        self.sold_out = {k: set(v) for k, v in data.get("sold_out", {}).items()}
+        self.budget = data.get("budget", 0)
+        self.spent = data.get("spent", 0)
         self.visit_count = data.get("visit_count", {})
         self.cook_history = data.get("cook_history", {})
         self.achievements = data.get("achievements", [])
@@ -314,14 +366,6 @@ class MarketGame:
             "terrible_dishes": data.get("stats_terrible_dishes", 0),
             "unique_dishes": set(data.get("stats_unique_dishes", [])),
             "unique_days": set(data.get("stats_unique_days", [])),
-            "unlocked_skills": data.get("unlocked_skills", []),
-            "inspect_counts": data.get("inspect_counts", {
-                "绿叶": 0, "根茎": 0, "瓜果": 0, "豆类": 0,
-                "菌菇": 0, "豆制品": 0, "肉": 0, "鱼": 0, "蛋": 0, "调味": 0,
-                "scale": 0,
-            }),
-            "affection": data.get("affection", {}),
-            "story_progress": data.get("story_progress", []),
         }
         self.wife_state = data.get("wife_state", "")
         self.palate = data.get("palate", {"dislikes": {}, "loves": {}, "fears": {}, "texture": {}})
@@ -352,57 +396,6 @@ class MarketGame:
         self.dish_feedback = data.get("dish_feedback", {})
         # dish_history: {菜名: [{day, appearance}]} 每次做菜的品相记录
         self.dish_history = data.get("dish_history", {})
-
-        # ── 恢复当天运行时状态（跨进程续传） ──
-        rt_basket = data.get("rt_basket")
-        if rt_basket is not None:
-            self.basket = rt_basket
-            self.budget = data.get("rt_budget", 30)
-            self.spent = data.get("rt_spent", 0)
-            self.market_time = data.get("rt_market_time", 0)
-            self.market_time_max = data.get("rt_market_time_max", 0)
-            self.current_stall = data.get("rt_current_stall")
-            self.time_of_day = data.get("rt_time_of_day", "上午")
-            self.weather = data.get("rt_weather", "晴")
-            self.season = data.get("rt_season", "春")
-            self.sold_out = {k: set(v) for k, v in data.get("rt_sold_out", {}).items()}
-            self.closed_stalls = set(data.get("rt_closed_stalls", []))
-            self.inspected_items = data.get("rt_inspected_items", {})
-            self.no_weight_trick = data.get("rt_no_weight_trick", False)
-            self._neighbor_conflict = data.get("rt_neighbor_conflict", False)
-            self._roof_leaking = data.get("rt_roof_leaking", False)
-            self._max_carry = data.get("rt_max_carry", 5)
-            self._last_stall = data.get("rt_last_stall")
-            self._market_closed = data.get("rt_market_closed", False)
-            self._rare_boost_today = data.get("rt_rare_boost", False)
-            self._season_day = data.get("rt_season_day", 1)
-            self._season_ending = data.get("rt_season_ending", False)
-            self._journey_shown = data.get("rt_journey_shown", False)
-            self._journey_text = data.get("rt_journey_text", "")
-            self.done = data.get("rt_done", False)
-            self.kitchen_state = data.get("rt_kitchen_state")
-            self.cooking_log = data.get("rt_cooking_log", [])
-            self.plate = data.get("rt_plate")
-            # 恢复灾难状态
-            disaster_id = data.get("rt_disaster_id")
-            if disaster_id:
-                self._today_disaster = next((d for d in MARKET_DISASTERS if d["id"] == disaster_id), None)
-                if self._today_disaster:
-                    fx = self._today_disaster.get("effects", {})
-                    self._disaster_price_mod = fx.get("price_mod", 1.0)
-                    self._disaster_quality_mod = fx.get("quality_mod", 0)
-                    self._disaster_bargain_bonus = fx.get("bargain_bonus", 0)
-            # 恢复RNG状态
-            rng_state = data.get("rt_rng_state")
-            if rng_state is not None:
-                # 重建rng闭包，seed设为保存时的内部状态
-                self.rng = mulberry32(rng_state)
-            # 重建摊位缓存
-            self._stall_item_cache = {}
-            self._season_stall_items = {}
-            for stall in STALLS:
-                self._season_stall_items[stall["id"]] = self._stall_season_items(stall)
-
         return True
 
     # ---- 新一局 ----
@@ -505,7 +498,7 @@ class MarketGame:
         self.closed_stalls = set()
         for stall in STALLS:
             sid = stall["id"]
-            if self.rng() < wfx["stall_close"]:
+            if (self.rng() % 10000) / 10000 < wfx["stall_close"]:
                 self.closed_stalls.add(sid)
                 continue
             out = set()
@@ -514,7 +507,7 @@ class MarketGame:
                 cat = VEGGIES[vname]["cat"]
                 cat_m = soc["cat_mod"].get(cat, 1.0)
                 chance = soc["base_chance"] * time_m * weather_m * cat_m
-                if self.rng() < chance:
+                if (self.rng() % 10000) / 10000 < chance:
                     out.add(vname)
             available = [v for v in items if v not in out]
             if not available and items:
@@ -578,7 +571,7 @@ class MarketGame:
                 self._disaster_bargain_bonus = fx.get("bargain_bonus", 0)
                 # 时间压力
                 if fx.get("time_pressure"):
-                    self.market_time = max(3, self.market_time - fx["time_pressure"])
+                    self.market_time = max(2, self.market_time - fx["time_pressure"])
                     self.market_time_max = self.market_time
                 # 关闭的摊位类别
                 closed_cats = fx.get("closed_cats", [])
@@ -690,7 +683,7 @@ class MarketGame:
                 familiar = " [熟客]"
             elif vc >= 1:
                 familiar = " [来过]"
-            lines.append(f"  {cat_emoji} {s['name']}（{s['owner']}·{s['personality']}）[{sid}]{familiar} — {count}种{sold_out_note}")
+            lines.append(f"  {cat_emoji} {s['name']}（{s['owner']}·{s['personality']}）{familiar} — {count}种{sold_out_note}")
 
         # 流动奇遇摊位
         for ws in WANDERING_STALLS:
@@ -1119,6 +1112,11 @@ class MarketGame:
 
     def buy(self, item_name, qty=1, stall_id=None):
         """买某样菜"""
+        if self._market_closed:
+            return "⏰ 菜场已经收摊了，买不了了。「回家」吧。"
+        # qty格式化：1.0→1, 0.5→0.5
+        def _fq(q):
+            return str(int(q)) if q == int(q) else str(q)
         # 稀有食材
         if hasattr(self, '_pending_rare') and self._pending_rare and self._pending_rare["name"] == item_name:
             return self._buy_rare()
@@ -1186,7 +1184,7 @@ class MarketGame:
         can_owe = regular_tier >= 4
 
         if price > money_left and not can_owe:
-            return f"钱不够。{item_name}{qty}{v['unit']}要{price}元，你只剩{money_left}元。"
+            return f"钱不够。{item_name}{_fq(qty)}{v['unit']}要{price}元，你只剩{money_left}元。"
 
         # 赊账提醒——钱不够但熟客可以赊
         if price > money_left and can_owe:
@@ -1233,7 +1231,7 @@ class MarketGame:
         owner_line = self._owner_buy_reaction(stall, item_name, is_regular=self.visit_count.get(stall["id"], 0) >= 3)
 
         lines = []
-        lines.append(f"买了 {item_name} {qty}{v['unit']}，{price}元。")
+        lines.append(f"买了 {item_name} {_fq(qty)}{v['unit']}，{price}元。")
         if weight_extra > 0:
             lines.append(f"（{trick['hint']}，比预期多花了{weight_extra}元。）")
 
@@ -1341,6 +1339,8 @@ class MarketGame:
 
     def bargain(self, item_name, stall_id=None, tactic=None):
         """砍价——支持自由话术"""
+        if self._market_closed:
+            return "⏰ 菜场收摊了，砍不了了。「回家」吧。"
         if item_name not in VEGGIES:
             return f"没有「{item_name}」这种菜。"
 
@@ -1482,7 +1482,7 @@ class MarketGame:
                     "stall": stall["id"],
                     "owner": stall["owner"],
                 })
-                lines.append(f"砍价成功！{item_name} {new_price}元（原价{price}元）。已入篮。")
+                lines.append(f"砍价成功！{item_name} {new_price}元（原价{price}元）。")
                 lines.append(f"{stall['owner']}：{line}")
                 # 统计
                 self.stats["bargain_streak"] += 1
@@ -1506,7 +1506,7 @@ class MarketGame:
             pool = BARGAIN_LINES[personality]["reject"]
             line = pool[self.rng() % len(pool)]
             lines.append(f"{stall['owner']}：{line}")
-            lines.append(f"{item_name}还是{price}元。没买。")
+            lines.append(f"{item_name}还是{price}元。")
             # 统计
             self.stats["bargain_fail_streak"] += 1
             self.stats["bargain_streak"] = 0
@@ -1521,6 +1521,9 @@ class MarketGame:
 
     def go_home(self):
         """回家做饭"""
+        # 已经在厨房——不覆盖kitchen_state
+        if self.kitchen_state is not None:
+            return "已经在厨房了。想做什么菜？「做 菜名」开始。"
         if not self.basket and not self.fridge:
             if self.weather == "雨":
                 return "淋着雨走回家，两手空空。冰箱也是空的。今天没法做饭。"
@@ -1564,6 +1567,7 @@ class MarketGame:
 
         # 阶段3：预处理出成率——摘黄叶/去皮/去壳
         prep_lines = []
+        self._yield_cache = {}  # name→actual_yield，不污染basket
         for item in self.basket:
             yp = YIELD_PCT.get(item["name"], 100)
             if yp < 80:
@@ -1573,7 +1577,7 @@ class MarketGame:
                     actual_yield = max(yp - 20, 20)
                 elif item["quality"] == "ok":
                     actual_yield = max(yp - 10, 30)
-                item["actual_yield"] = actual_yield
+                self._yield_cache[item["name"]] = actual_yield
                 # 找对应的损耗描述
                 cat = VEGGIES.get(item["name"], {}).get("cat", "")
                 if cat == "绿叶":
@@ -4836,7 +4840,7 @@ class MarketGame:
     # ---- 指令入口 ----
 
     def cmd(self, instruction):
-        """主指令入口"""
+        """主指令入口，跟钓鱼游戏一样"""
         instruction = instruction.strip()
         if not instruction:
             return "？"
@@ -4848,11 +4852,8 @@ class MarketGame:
                 results.append(self._cmd_single(part))
                 if i < len(parts) - 1:
                     results.append("")
-            self.save()
             return "\n".join(results)
-        result = self._cmd_single(instruction)
-        self.save()
-        return result
+        return self._cmd_single(instruction)
 
     def _cmd_single(self, instruction):
         """单条指令处理"""
@@ -4866,13 +4867,7 @@ class MarketGame:
 
         # 还没开新局，自动开一局
         if self.day == 0:
-            # 先试读档续传——跨进程恢复
-            if os.path.exists(SAVE_FILE):
-                self.load()
-                if self.day > 0 and not self.done:
-                    return self._status_line() + "\n（续传恢复）"
-            if self.day == 0 or self.done:
-                self.new_day()
+            self.new_day()
 
         # 新局
         if instruction in ("新局", "new", "开始"):
@@ -4907,11 +4902,26 @@ class MarketGame:
                 item_name = parts[i]
                 qty = 1
                 if i + 1 < len(parts):
-                    try:
-                        qty = int(parts[i + 1])
+                    q = parts[i + 1]
+                    # 支持 "半斤" / "0.5" / "半" / "两" / 整数
+                    if q in ("半", "半斤", "0.5斤"):
+                        qty = 0.5
                         i += 2
-                    except ValueError:
-                        i += 1
+                    elif q == "两":
+                        qty = 0.1  # 1两≈0.1斤
+                        i += 2
+                    else:
+                        try:
+                            qty = float(q)
+                            if qty <= 0:
+                                qty = 1
+                            i += 2
+                        except ValueError:
+                            # 下一个词不是数量——如果它看起来像量词也吞掉
+                            if q in ("斤", "把", "个", "块", "条", "根", "袋", "盒", "只", "盆"):
+                                i += 2  # "买 五花肉 斤" → 1斤
+                            else:
+                                i += 1
                 else:
                     i += 1
                 results.append(self.buy(item_name, qty))
@@ -4924,8 +4934,8 @@ class MarketGame:
             tactic = parts[1] if len(parts) > 1 else None
             return self.bargain(item_name, tactic=tactic)
 
-        # 回家
-        if instruction in ("回家", "做饭", "厨房", "回去"):
+        # 回家——模糊匹配"回家做饭""回去做饭"等
+        if instruction in ("回家", "做饭", "厨房", "回去") or instruction.startswith("回家") or instruction.startswith("回去做"):
             return self.go_home()
 
         # 做菜步骤——决定做什么菜
@@ -5389,7 +5399,7 @@ class MarketGame:
             v = VEGGIES[vname]
             base = v["price"][1]
             price = round(base * 1.2, 1)
-            quality = "great" if self.rng() < 0.5 else "good"
+            quality = "great" if (self.rng() % 10000) / 10000 < 0.5 else "good"
             self._stall_item_cache[vname] = {"price": price, "quality": quality}
             q_tag = {"great": "★优", "good": "○好"}.get(quality, "～般")
             lines.append(f"  {vname} · {price}元/{v['unit']} {q_tag}")
@@ -5561,18 +5571,6 @@ class MarketGame:
         lines.append(f"\n总进度：{pct}%")
         return "\n".join(lines)
 
-    def _status_line(self):
-        """简短状态行——续传恢复用"""
-        parts = [f"第{self.day}天", self.season, self.weather, self.time_of_day]
-        if self.market_time > 0:
-            parts.append(f"菜场时间{self.market_time}/{self.market_time_max}")
-        if self.basket:
-            items = ", ".join(i["name"] for i in self.basket)
-            parts.append(f"篮子:{items}")
-        if self.kitchen_state:
-            parts.append("做菜中")
-        return " · ".join(parts)
-
     def _help(self):
         return """菜市场 · 帮助
 
@@ -5593,8 +5591,7 @@ class MarketGame:
   退 菜名        退掉缺秤的菜
   回家          回家做饭
   做 菜名        决定做什么菜
-  做法 一句话    一句话描述全程，引擎自动推（省token）
-  （或写步骤）   一步一步写怎么做
+  （然后写步骤）   一步一步写怎么做
   出锅          端上桌
   状态          看当前状态
   篮子          看买了什么

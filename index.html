@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>出门买菜上桌吃饭</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #f5f0e8;
+    color: #2c2416;
+    font-family: 'Noto Sans SC', sans-serif;
+    line-height: 1.8;
+    overflow-x: hidden;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ── 顶部 ── */
+  .hero {
+    background: linear-gradient(170deg, #2c2416 0%, #4a3728 40%, #6b5344 100%);
+    padding: 80px 0 60px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(circle at 20% 80%, rgba(255,180,60,0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255,120,50,0.1) 0%, transparent 40%);
+  }
+  .hero h1 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 42px;
+    color: #f5e6c8;
+    letter-spacing: 6px;
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .hero .tagline {
+    color: #c4a87a;
+    font-size: 16px;
+    font-weight: 300;
+    letter-spacing: 2px;
+    position: relative;
+  }
+  .hero .tagline::before,
+  .hero .tagline::after {
+    content: '·';
+    margin: 0 12px;
+    opacity: 0.5;
+  }
+
+  /* ── 流程条 ── */
+  .flow {
+    background: #2c2416;
+    padding: 32px 0;
+    overflow-x: auto;
+  }
+  .flow-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: max-content;
+    padding: 0 24px;
+  }
+  .flow-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .flow-step .icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,200,100,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .flow-step .label {
+    color: #c4a87a;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  .flow-arrow {
+    color: #5a4a38;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  /* ── 通用区 ── */
+  section {
+    padding: 56px 0;
+  }
+  section:nth-child(even) {
+    background: #ede7db;
+  }
+
+  .section-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 24px;
+    color: #2c2416;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title .emoji { font-size: 22px; }
+  .section-sub {
+    color: #8a7a66;
+    font-size: 14px;
+    margin-bottom: 32px;
+    padding-left: 34px;
+  }
+
+  /* ── 卡片网格 ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(44,36,22,0.06);
+    border: 1px solid rgba(44,36,22,0.06);
+  }
+  .card.full { grid-column: 1 / -1; }
+  .card .card-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .card h3 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 16px;
+    margin-bottom: 6px;
+    color: #2c2416;
+  }
+  .card p {
+    font-size: 13px;
+    color: #6b5e4e;
+    line-height: 1.7;
+  }
+
+  /* ── 摊主表 ── */
+  .stall-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(44,36,22,0.06);
+    font-size: 13px;
+  }
+  .stall-table th {
+    background: #4a3728;
+    color: #f5e6c8;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 500;
+  }
+  .stall-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #ede7db;
+    color: #4a3f32;
+  }
+  .stall-table tr:last-child td { border-bottom: none; }
+  .stall-table tr:nth-child(even) td { background: #faf7f2; }
+  .personality {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .p-real { background: #e8f5e9; color: #2e7d32; }
+  .p-quick { background: #e3f2fd; color: #1565c0; }
+  .p-chatty { background: #fff3e0; color: #e65100; }
+  .p-shrewd { background: #fce4ec; color: #c62828; }
+  .p-stubborn { background: #f3e5f5; color: #6a1b9a; }
+
+  /* ── 做菜演示 ── */
+  .cook-demo {
+    background: #2c2416;
+    border-radius: 12px;
+    padding: 24px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.9;
+    color: #c4a87a;
+    box-shadow: 0 2px 12px rgba(44,36,22,0.1);
+  }
+  .cook-demo .prompt {
+    color: #8a7a66;
+  }
+  .cook-demo .cmd {
+    color: #f5c842;
+  }
+  .cook-demo .feedback {
+    color: #a8d8a8;
+  }
+  .cook-demo .sense {
+    color: #7ec8e3;
+  }
+  .cook-demo .warn {
+    color: #e8a458;
+  }
+
+  /* ── 故事卡 ── */
+  .story-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(44,36,22,0.06);
+    border-left: 4px solid #c4a87a;
+    margin-bottom: 16px;
+  }
+  .story-card .story-who {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 15px;
+    color: #2c2416;
+    margin-bottom: 8px;
+  }
+  .story-card .story-text {
+    font-size: 14px;
+    color: #4a3f32;
+    line-height: 1.9;
+    font-style: italic;
+  }
+
+  /* ── 品质条 ── */
+  .quality-bar {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0;
+  }
+  .quality-item {
+    flex: 1;
+    text-align: center;
+    padding: 12px 4px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .q-great { background: #e8f5e9; color: #2e7d32; }
+  .q-good { background: #f1f8e9; color: #558b2f; }
+  .q-ok { background: #fff8e1; color: #f9a825; }
+  .q-bad { background: #ffe0b2; color: #e65100; }
+  .q-trap { background: #ffcdd2; color: #c62828; }
+  .quality-item .q-icon { font-size: 18px; display: block; margin-bottom: 4px; }
+  .quality-item .q-label { font-size: 11px; opacity: 0.8; }
+
+  /* ── 灾害卡 ── */
+  .disaster-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .disaster-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(44,36,22,0.05);
+  }
+  .disaster-card .d-icon { font-size: 22px; float: right; margin-left: 8px; }
+  .disaster-card h4 { font-size: 14px; margin-bottom: 4px; color: #2c2416; }
+  .disaster-card p { font-size: 12px; color: #6b5e4e; line-height: 1.6; }
+
+  /* ── 代码块 ── */
+  .code-block {
+    background: #1e1a14;
+    border-radius: 10px;
+    padding: 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    color: #c4a87a;
+    overflow-x: auto;
+    line-height: 1.7;
+  }
+  .code-block .comment { color: #6b5e4e; }
+  .code-block .keyword { color: #f5c842; }
+  .code-block .string { color: #a8d8a8; }
+
+  /* ── 技术条 ── */
+  .tech-bar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+  }
+  .tech-item {
+    background: #fff;
+    border: 1px solid #d4c9b8;
+    border-radius: 8px;
+    padding: 12px 16px;
+    text-align: center;
+    flex: 1;
+    min-width: 120px;
+  }
+  .tech-item .t-num {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 24px;
+    color: #4a3728;
+    font-weight: 700;
+  }
+  .tech-item .t-label {
+    font-size: 12px;
+    color: #8a7a66;
+    margin-top: 2px;
+  }
+
+  /* ── 底部 ── */
+  .footer {
+    background: #2c2416;
+    padding: 40px 0;
+    text-align: center;
+  }
+  .footer p {
+    color: #8a7a66;
+    font-size: 14px;
+    font-family: 'Noto Serif SC', serif;
+    letter-spacing: 1px;
+  }
+  .footer .license {
+    margin-top: 12px;
+    font-size: 12px;
+    color: #5a4a38;
+    font-family: 'Noto Sans SC', sans-serif;
+  }
+
+  /* ── 分隔线 ── */
+  .divider {
+    text-align: center;
+    margin: 40px 0;
+    color: #c4a87a;
+    font-size: 14px;
+    letter-spacing: 8px;
+  }
+
+  /* ── 引用 ── */
+  .pull-quote {
+    background: #fff;
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin: 24px 0;
+    box-shadow: 0 2px 12px rgba(44,36,22,0.06);
+    text-align: center;
+  }
+  .pull-quote p {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 18px;
+    color: #2c2416;
+    line-height: 2;
+  }
+
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 30px; letter-spacing: 3px; }
+    .card-grid { grid-template-columns: 1fr; }
+    .disaster-grid { grid-template-columns: 1fr; }
+    .quality-bar { flex-wrap: wrap; }
+    .quality-item { min-width: 60px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ 顶部 ═══ -->
+<div class="hero">
+  <h1>出门买菜上桌吃饭</h1>
+  <div class="tagline">给 AI 玩的一顿饭游戏</div>
+</div>
+
+<!-- ═══ 流程 ═══ -->
+<div class="flow">
+  <div class="flow-inner">
+    <div class="flow-step"><span class="icon">💰</span><span class="label">领钱</span></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="icon">🚶</span><span class="label">出门</span></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="icon">🏪</span><span class="label">逛菜场</span></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="icon">🛒</span><span class="label">买</span></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="icon">🏠</span><span class="label">回家</span></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="icon">🍳</span><span class="label">做菜</span></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="icon">🍽</span><span class="label">端上桌</span></div>
+  </div>
+</div>
+
+<!-- ═══ 这是什么 ═══ -->
+<section>
+  <div class="container">
+    <div class="section-title"><span class="emoji">🥬</span> 这游戏是什么</div>
+    <div class="section-sub">不是打怪升级，是过日子</div>
+    <p style="font-size:15px;color:#4a3f32;margin-bottom:20px;">
+      你是一个有伴侣的普通人。每天早上领到一笔买菜钱，出门走到菜市场，在有限时间里跟摊主砍价、挑菜、躲暗坑，回家开火一步步做菜，端上桌给她吃。
+    </p>
+    <div class="pull-quote">
+      <p>她不是 NPC。她是真人。<br>游戏不编她的口味，不替她反应。<br>她说好吃就是好吃，她说太咸你就得记着下次少放盐。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 菜场 ═══ -->
+<section>
+  <div class="container">
+    <div class="section-title"><span class="emoji">🏪</span> 菜场</div>
+    <div class="section-sub">16个摊位，5种性格，雨雪晴阴</div>
+
+    <table class="stall-table">
+      <tr><th>摊位</th><th>摊主</th><th>性格</th><th>卖什么</th></tr>
+      <tr><td>王姐蔬菜</td><td>王姐</td><td><span class="personality p-chatty">话唠</span></td><td>小白菜、菠菜、生菜…</td></tr>
+      <tr><td>老张菜摊</td><td>老张</td><td><span class="personality p-real">实在</span></td><td>韭菜、蒜苗、大白菜…</td></tr>
+      <tr><td>小陈鲜蔬</td><td>小陈</td><td><span class="personality p-quick">爽快</span></td><td>茼蒿、苋菜、香菜…</td></tr>
+      <tr><td>刘姐根茎</td><td>刘姐</td><td><span class="personality p-shrewd">算计</span></td><td>萝卜、土豆、山药…</td></tr>
+      <tr><td>赵哥山货</td><td>赵哥</td><td><span class="personality p-stubborn">死硬</span></td><td>春笋、冬笋、芋头…</td></tr>
+      <tr><td>孙姐瓜果</td><td>孙姐</td><td><span class="personality p-chatty">话唠</span></td><td>番茄、黄瓜、茄子…</td></tr>
+      <tr><td>阿亮果蔬</td><td>阿亮</td><td><span class="personality p-quick">爽快</span></td><td>青椒、秋葵、丝瓜…</td></tr>
+      <tr><td>老吴菌菇</td><td>老吴</td><td><span class="personality p-shrewd">算计</span></td><td>香菇、平菇、金针菇…</td></tr>
+      <tr><td>胖哥肉铺</td><td>胖哥</td><td><span class="personality p-chatty">话唠</span></td><td>五花肉、排骨、里脊…</td></tr>
+      <tr><td>老何鱼摊</td><td>何大爷</td><td><span class="personality p-real">实在</span></td><td>鲫鱼、草鱼、虾…</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ═══ 品质 ═══ -->
+<section>
+  <div class="container">
+    <div class="section-title"><span class="emoji">🔍</span> 品质与暗坑</div>
+    <div class="section-sub">看不出来才是真的坑</div>
+
+    <div class="quality-bar">
+      <div class="quality-item q-great"><span class="q-icon">★</span>优品<span class="q-label">水灵新鲜</span></div>
+      <div class="quality-item q-good"><span class="q-icon">○</span>不错<span class="q-label">正常水平</span></div>
+      <div class="quality-item q-ok"><span class="q-icon">～</span>一般<span class="q-label">凑合能用</span></div>
+      <div class="quality-item q-bad"><span class="q-icon">✗</span>差<span class="q-label">发蔫有斑</span></div>
+      <div class="quality-item q-trap"><span class="q-icon">!</span>暗坑<span class="q-label">切开才知道</span></div>
+    </div>
+
+    <div class="card full">
+      <h3>什么是暗坑？</h3>
+      <p>表面看水灵的白菜，回家切开才发现菜心烂了。看着饱满的鱼，其实是注水的。干香菇闻着正常，泡开后里面发黑。<br><br>「细看」能提前发现，但费时间。你不细看就赌——赌对了省时间，赌错了回家一兜烂菜。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 做菜 ═══ -->
+<section>
+  <div class="container">
+    <div class="section-title"><span class="emoji">🍳</span> 做菜</div>
+    <div class="section-sub">不是点按钮，是真的在写步骤</div>
+
+    <div class="card-grid">
+      <div class="card">
+        <span class="card-icon">⚡</span>
+        <h3>快做</h3>
+        <p>一句话告诉引擎怎么做，自动拆步骤。关键时候暂停——"小白菜碧绿油亮，现在出锅正好？再炒就蔫了。"</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">📝</span>
+        <h3>细做</h3>
+        <p>一步一步写，每步看锅里变化。番茄从鲜脆到微皱出水，鸡蛋从流动到膨胀定型。火大了会糊，盐多了能补救。</p>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;">
+      <div class="cook-demo">
+<span class="prompt">▸ 做法 番茄切块，鸡蛋打散先炒盛出，再炒番茄出汁放回蛋，加盐出锅</span>
+
+<span class="cmd">番茄切块</span>
+<span class="feedback">刀刃切入番茄皮，汁水涌出来，案板上淌了一片红。</span>
+
+<span class="cmd">鸡蛋打散先炒盛出</span>
+<span class="sense">🍳 番茄：鲜脆，颜色鲜亮</span>
+<span class="feedback">蛋壳磕在碗沿上，咔的一声。打散了。开火了。</span>
+<span class="sense">✨ 番茄和鸡蛋在锅里一碰——汁水裹着蛋花，这搭配太对了。</span>
+<span class="feedback">📜 发现菜谱：番茄炒蛋！锅铲翻飞，香味出来了。盛出鸡蛋。</span>
+
+<span class="cmd">炒番茄出汁放回蛋</span>
+<span class="sense">🍳 番茄：表面微皱，开始出水</span>
+<span class="feedback">放回鸡蛋。锅铲翻飞，香味出来了。</span>
+
+<span class="cmd">加盐出锅</span>
+<span class="feedback">──── 番茄炒蛋 ────
+凑合吧。颜色发暗，有点咸，不太想夹第二筷子。
+⚠ 番茄差点火候、鸡蛋有点过了</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 故事 ═══ -->
+<section>
+  <div class="container">
+    <div class="section-title"><span class="emoji">📖</span> 摊主的故事</div>
+    <div class="section-sub">不是任务线，是偶遇</div>
+
+    <div class="story-card">
+      <div class="story-who">🥩 胖哥和他的儿子</div>
+      <div class="story-text">你买肉的时候他手抖了一下差点切到手。过了几天他见你就笑，多塞了块肉皮——"瞎猫碰死耗子，考了第九"。再后来你早上去菜场，撞见他骂儿子"这题怎么又错了"，骂完轻轻把作业本摆正。</div>
+    </div>
+
+    <div class="story-card">
+      <div class="story-who">🐟 何大爷和他的猫</div>
+      <div class="story-text">鱼摊底下蜷着只三花猫。后来猫下崽了，养不过来，有人要就送。再后来你买完鱼要走，他从摊子底下拎出个小袋子——"拿去，给你家猫吃。我家那只，送人了，留着也没人喂。"他别过脸去，假装整理鱼盆。</div>
+    </div>
+
+    <div class="story-card">
+      <div class="story-who">🧈 陈嫂和她的保温杯</div>
+      <div class="story-text">她话特别少，问三句答一句。手边放着个掉漆的搪瓷杯，杯盖上"优秀教师"几个字磨得发白。你没问，她没解释。后来你撞见她的学生来摊边叫"陈老师"，陈嫂还是那副淡淡的样子，点了点头——"来了。"</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 灾害 ═══ -->
+<section>
+  <div class="container">
+    <div class="section-title"><span class="emoji">⛈</span> 天气与灾害</div>
+    <div class="section-sub">出门看天，买菜靠命</div>
+
+    <div class="disaster-grid">
+      <div class="disaster-card">
+        <span class="d-icon">🌧</span>
+        <h4>暴雨淹市</h4>
+        <p>蔬菜区全关，只剩肉鱼蛋。剩下的涨价30%。</p>
+      </div>
+      <div class="disaster-card">
+        <span class="d-icon">📢</span>
+        <h4>检查来了</h4>
+        <p>摊主脸色一变，时间直接扣3点。</p>
+      </div>
+      <div class="disaster-card">
+        <span class="d-icon">🏚</span>
+        <h4>摊主缺席</h4>
+        <p>少了两个摊位——一个病了，一个家里有事。</p>
+      </div>
+      <div class="disaster-card">
+        <span class="d-icon">📈</span>
+        <h4>批发涨价</h4>
+        <p>什么都贵50%，但砍价机会也多了。</p>
+      </div>
+      <div class="disaster-card">
+        <span class="d-icon">✨</span>
+        <h4>好货到货</h4>
+        <p>品质升一档，摊主难得笑着招呼。涨10%。</p>
+      </div>
+      <div class="disaster-card">
+        <span class="d-icon">🏮</span>
+        <h4>节前抢购</h4>
+        <p>挤三倍人，涨价40%，时间缩2点，品质还降。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 口味 ═══ -->
+<section>
+  <div class="container">
+    <div class="section-title"><span class="emoji">❤️</span> 口味记忆</div>
+    <div class="section-sub">初始空白，慢慢学——像真实的关系</div>
+
+    <div class="card-grid">
+      <div class="card">
+        <span class="card-icon">🦐</span>
+        <h3>她爱吃虾</h3>
+        <p>看到虾的时候："她爱吃虾。买不买？"</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🚫</span>
+        <h3>她不吃香菜</h3>
+        <p>看到香菜："她怕这个——香菜。不买了。"</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🥔</span>
+        <h3>土豆要脆的</h3>
+        <p>做土豆时："她要脆的土豆——记着别做过了。"</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🧂</span>
+        <h3>她说太咸了</h3>
+        <p>下次做这道菜："上次她吃了说——有点咸。"</p>
+      </div>
+    </div>
+
+    <div class="pull-quote" style="margin-top:24px;">
+      <p>不替她决定，只是提醒你记得。<br>就像真实的关系——不是一开始就知道对方爱吃什么，是慢慢记住的。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 冰箱 ═══ -->
+<section>
+  <div class="container">
+    <div class="section-title"><span class="emoji">🧊</span> 冰箱与过期</div>
+    <div class="section-sub">昨天买的菠菜今天就得吃</div>
+
+    <div class="cook-demo" style="font-size:14px;">
+🗑 冰箱过期——
+  ✗ 空心菜（不错），放了1天，坏了
+  ✗ 肉末（优品），放了1天，坏了
+冰箱：土豆(12天)、冬瓜(4天)、肉末⚠(1天)
+    </div>
+    <p style="font-size:13px;color:#6b5e4e;margin-top:12px;">
+      ⚠ 表示快过期的，提醒你今天赶紧用。绿叶菜1-2天，根茎7-14天，肉1-2天，干货30-60天。
+    </p>
+  </div>
+</section>
+
+<!-- ═══ 发现 ═══ -->
+<section>
+  <div class="container">
+    <div class="section-title"><span class="emoji">🔓</span> 隐藏与发现</div>
+    <div class="section-sub">好感够了才会告诉你</div>
+
+    <div class="card-grid">
+      <div class="card">
+        <span class="card-icon">🌿</span>
+        <h3>菜场后院</h3>
+        <p>第5天 + 好感40。薄荷、紫苏、九层塔、香茅，别处买不到。</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🌱</span>
+        <h3>天台菜园</h3>
+        <p>第10天 + 好感60 + 发现过稀有。自家小番茄、辣椒苗、迷你南瓜。</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">❄️</span>
+        <h3>冷库门</h3>
+        <p>冬天 + 去老何鱼摊5次。冻虾仁、冰鲜带鱼、冬笋。</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🔥</span>
+        <h3>楼梯间小灶</h3>
+        <p>好感50 + 买过3种菌菇。摊主们私下做饭的地方。</p>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;" class="card full">
+      <span class="card-icon">📜</span>
+      <h3>好感里程碑</h3>
+      <p>老吴好感60 → 祖传菌菇汤方子 | 胖哥好感60 → 秘制红烧肉诀窍 | 王姐好感70 → 家传腌雪里蕻 | 何大爷好感50 → 桶底私藏好鱼 | 刘姐好感55 → 以后秤最老实</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 代码 ═══ -->
+<section>
+  <div class="container">
+    <div class="section-title"><span class="emoji">⚙️</span> 技术实现</div>
+    <div class="section-sub">5个文件，10000行，零依赖</div>
+
+    <div class="tech-bar">
+      <div class="tech-item"><div class="t-num">5</div><div class="t-label">Python 文件</div></div>
+      <div class="tech-item"><div class="t-num">10K</div><div class="t-label">行代码</div></div>
+      <div class="tech-item"><div class="t-num">0</div><div class="t-label">外部依赖</div></div>
+      <div class="tech-item"><div class="t-num">90</div><div class="t-label">种食材</div></div>
+      <div class="tech-item"><div class="t-num">16</div><div class="t-label">个摊位</div></div>
+      <div class="tech-item"><div class="t-num">4</div><div class="t-label">条故事线</div></div>
+    </div>
+
+    <div class="code-block">
+<span class="comment"># 三行跑起来</span>
+<span class="keyword">from</span> market_engine <span class="keyword">import</span> MarketGame
+g = MarketGame()
+result = g.cmd(<span class="string">"新局"</span>)  <span class="comment"># 所有交互都走 cmd()</span>
+
+<span class="comment"># 校验数据</span>
+<span class="comment"># python validate_data.py</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 底部 ═══ -->
+<div class="footer">
+  <p>买菜不难，难的是每天想吃什么<br>做饭不难，难的是做完有人说好吃</p>
+  <div class="license">MIT License · 开源免费</div>
+</div>
+
+</body>
+</html>
