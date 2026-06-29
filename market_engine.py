@@ -1754,8 +1754,8 @@ class MarketGame:
                 _seasoning_names = {"盐", "酱油", "醋", "糖", "料酒", "淀粉", "油", "水", "大葱"}
                 all_items = list(self.fridge) + list(self.basket) + KITCHEN_DEFAULTS
                 mentioned = {item["name"] for item in all_items if item["name"] in step_full}
-                in_pot = set(ks.get("pot_contents", []))
-                on_board = ks.get("_on_board", set())
+                in_pot = set(ks.get("pot_contents") or [])
+                on_board = ks.get("_on_board") or set()
                 unhandled = [item["name"] for item in all_items
                             if item["name"] not in _seasoning_names
                             and item["name"] not in mentioned
@@ -1791,7 +1791,7 @@ class MarketGame:
         combined = "\n".join(all_feedback)
         if not hit_moment and not self.done:
             # 检查熟度——大部分食材在sweet区间就提示可以出锅
-            cookable = {n: d for n, d in ks.get("item_state", {}).items()
+            cookable = {n: d for n, d in (ks.get("item_state") or {}).items()
                         if n not in _seasoning and d > 0}
             if cookable:
                 avg_doneness = sum(cookable.values()) / len(cookable)
@@ -1809,6 +1809,17 @@ class MarketGame:
             return "今天的饭已经做完了。「新局」开始明天。"
 
         ks = self.kitchen_state
+        # 防御：关键列表/字典可能被存档损坏或未来代码设成None
+        if ks.get("pot_contents") is None:
+            ks["pot_contents"] = []
+        if ks.get("item_state") is None:
+            ks["item_state"] = {}
+        if ks.get("steps") is None:
+            ks["steps"] = []
+        if ks.get("seasoning") is None:
+            ks["seasoning"] = []
+        if ks.get("completed_dishes") is None:
+            ks["completed_dishes"] = []
         step_text = step_text.strip()
         if not step_text:
             return "？"
