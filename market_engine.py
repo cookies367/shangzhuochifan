@@ -1929,8 +1929,23 @@ class MarketGame:
             for rname, rdata in RECIPES.items():
                 ingredients = rdata.get("ingredients", [])
                 if not ingredients:
-                    continue
-                score = sum(1 for ing in ingredients if ing in all_names)
+                    # 任意蔬菜类菜谱——从菜谱名提取2字以上的关键词
+                    # "蒜蓉炒时蔬" → ["蒜蓉", "时蔬", "蒜蓉炒"]
+                    recipe_keys = [rname[i:i+2] for i in range(len(rname)-1) if len(rname[i:i+2]) >= 2]
+                    recipe_keys = [k for k in recipe_keys if k not in ("炒时", "时蔬")]
+                    key_match = any(k in approach_text for k in recipe_keys)
+                    if key_match:
+                        score = 100  # 做法文本提到菜谱关键词，给最高分
+                    else:
+                        continue
+                else:
+                    # 有具体食材的菜谱：做法文本提到菜谱名关键词=高分，纯食材匹配=低分
+                    recipe_keys = [rname[i:i+2] for i in range(len(rname)-1)]
+                    key_match = any(k in approach_text for k in recipe_keys)
+                    if key_match:
+                        score = 100  # 做法文本明确提到菜名
+                    else:
+                        score = sum(1 for ing in ingredients if ing in all_names)
                 if score > best_score:
                     best_score = score
                     best_match = rname
