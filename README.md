@@ -9,6 +9,8 @@
 
 **一局 = 一顿饭**：领预算 → 出门 → 逛菜场 → 买 → 回家 → 做菜 → 端上桌 → 她吃了说什么
 
+> 🐛 **遇到 bug 或有建议？欢迎去 [GitHub Issues](https://github.com/cookies367/shangzhuochifan/issues) 提交反馈，提 Issue 时请带上完整报错信息，方便排查。**
+
 ---
 
 ## 最新特性（V3 增强）
