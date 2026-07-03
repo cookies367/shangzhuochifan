@@ -1,4 +1,4 @@
-# 出门买菜上桌吃饭 · V3 Operit增强版
+# 出门买菜上桌吃饭 · V3 Operit二改版，配套operit插件在插件市场下载
 
 > 基于 [yuyixuanfu/shangzhuochifan](https://github.com/yuyixuanfu/shangzhuochifan) 二改，MIT协议
 > 原作者：yuyixuanfu | 二改：cookies367
