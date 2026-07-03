@@ -354,4 +354,109 @@ RECIPES = {
             {"id": "peel", "name": "去皮（口感更嫩）", "keywords": ["去皮", "削皮", "剥皮"], "bonus": 1},
         ],
     },
+
+    # ── 新增：高级菜谱 ──
+    "黑椒牛排": {
+        "ingredients": ["牛排"],
+        "required": [
+            {"id": "prep", "name": "牛排回温", "keywords": ["回温", "室温", "化冻", "解冻"], "hint": "牛排还没回温。"},
+            {"id": "season", "name": "调味", "keywords": ["盐", "胡椒", "黑椒", "抹"], "hint": "还没撒盐和胡椒。"},
+            {"id": "heat", "name": "热锅黄油", "keywords": ["黄油", "热锅", "烧油", "化黄油"], "hint": "黄油还没化开。"},
+            {"id": "fry", "name": "煎牛排", "keywords": ["煎", "下锅", "煎牛排"], "hint": "牛排还没下锅煎。"},
+            {"id": "flip", "name": "翻面", "keywords": ["翻面", "翻", "两面"], "hint": "还没翻面。"},
+            {"id": "rest", "name": "醒肉", "keywords": ["醒肉", "静置", "出锅放", "切块装盘"], "hint": "煎完没醒肉直接切了，肉汁全跑了。"},
+        ],
+        "optional": [
+            {"id": "rosemary", "name": "迷迭香/百里香", "keywords": ["迷迭香", "百里香", "香草"], "bonus": 1},
+            {"id": "garlic", "name": "蒜香", "keywords": ["蒜", "拍蒜", "大蒜"], "bonus": 1},
+        ],
+    },
+    "蒜蓉大虾": {
+        "ingredients": ["大虾"],
+        "required": [
+            {"id": "prep", "name": "处理虾", "keywords": ["剪须", "开背", "去虾线", "处理虾"], "hint": "虾还没开背去线。"},
+            {"id": "prep_garlic", "name": "处理蒜", "keywords": ["蒜末", "蒜蓉", "剁蒜", "切蒜"], "hint": "蒜还没弄成蒜蓉。"},
+            {"id": "heat", "name": "热锅", "keywords": ["热锅", "倒油", "烧油"], "hint": "锅还没热。"},
+            {"id": "fry_garlic", "name": "炒蒜蓉", "keywords": ["炒蒜", "爆香", "蒜蓉下"], "hint": "蒜蓉还没下锅爆香。"},
+            {"id": "fry_shrimp", "name": "煎/炒虾", "keywords": ["虾下锅", "煎虾", "炒虾", "大虾下"], "hint": "虾还没下锅。"},
+            {"id": "season", "name": "调味", "keywords": ["加盐", "料酒", "生抽", "调味"], "hint": "还没调味。"},
+        ],
+        "optional": [
+            {"id": "butter", "name": "加黄油", "keywords": ["黄油", "一块黄油"], "bonus": 2},
+            {"id": "chili", "name": "放小米椒", "keywords": ["小米椒", "辣椒", "红椒"], "bonus": 1},
+        ],
+    },
+    "芝士焗饭": {
+        "ingredients": ["芝士", "米饭"],
+        "required": [
+            {"id": "prep", "name": "准备配料", "keywords": ["切丁", "切块", "准备", "炒熟"], "hint": "还没有配料，饭太单调了。"},
+            {"id": "mix", "name": "混合", "keywords": ["拌匀", "混合", "铺在饭上", "铺米饭"], "hint": "配料还没和饭拌在一起。"},
+            {"id": "cheese", "name": "铺芝士", "keywords": ["芝士", "起司", "奶酪", "铺芝士", "撒芝士"], "hint": "还没铺芝士。"},
+            {"id": "bake", "name": "烤/焗", "keywords": ["烤箱", "烤", "焗", "微波炉", "微波"], "hint": "还没烤/焗。"},
+        ],
+        "optional": [
+            {"id": "extra_cheese", "name": "多加芝士", "keywords": ["多加芝士", "双层芝士", "芝士瀑布"], "bonus": 2},
+            {"id": "herb", "name": "撒香草", "keywords": ["罗勒", "欧芹", "披萨草", "香草"], "bonus": 1},
+        ],
+    },
+    "三文鱼刺身": {
+        "ingredients": ["三文鱼"],
+        "required": [
+            {"id": "prep", "name": "解冻回温", "keywords": ["解冻", "回温", "室温"], "hint": "鱼肉太冰，还没解冻。"},
+            {"id": "slice", "name": "切片", "keywords": ["切片", "斜刀", "片鱼", "切刺身"], "hint": "还没切片。"},
+            {"id": "plate", "name": "装盘", "keywords": ["装盘", "摆盘", "铺", "码"], "hint": "还没装盘。"},
+            {"id": "sauce", "name": "配酱油/芥末", "keywords": ["酱油", "芥末", "wasabi", "蘸料"], "hint": "还没配蘸料。"},
+        ],
+        "optional": [
+            {"id": "lemon", "name": "挤柠檬汁", "keywords": ["柠檬", "挤柠檬", "去腥"], "bonus": 2},
+            {"id": "radish", "name": "配萝卜丝", "keywords": ["萝卜丝", "白萝卜", "切丝"], "bonus": 1},
+        ],
+    },
+
+    # ── 新增：黑暗料理（用于恶搞态度的神秘产物） ──
+    "老干妈雪糕": {
+        "ingredients": ["香草冰淇淋", "老干妈"],
+        "required": [
+            {"id": "prep", "name": "挖雪糕", "keywords": ["挖", "球", "舀", "装"], "hint": "还没挖雪糕。"},
+            {"id": "sauce", "name": "加老干妈", "keywords": ["老干妈", "辣椒酱", "辣椒油", "加辣"], "hint": "还没加老干妈——这道菜的灵魂。"},
+            {"id": "mix", "name": "搅拌", "keywords": ["拌", "搅拌", "搅匀"], "hint": "还没搅匀。"},
+        ],
+    },
+    "板蓝根泡面": {
+        "ingredients": ["泡面", "板蓝根"],
+        "required": [
+            {"id": "boil", "name": "煮面", "keywords": ["煮面", "泡面", "水开", "下锅"], "hint": "面还没煮。"},
+            {"id": "sauce", "name": "加板蓝根", "keywords": ["板蓝根", "冲剂", "药", "加板蓝根"], "hint": "还没加板蓝根。"},
+            {"id": "mix", "name": "搅拌", "keywords": ["拌", "搅拌", "搅匀"], "hint": "还没搅匀。"},
+        ],
+    },
+}
+
+# ── 菜谱元数据（难度、熟练度、分类）──
+# 与主 RECIPES 字典分离，避免破坏原有步骤结构
+RECIPE_META = {
+    # 原版家常菜（难度1-3，新手友好）
+    "番茄炒蛋": {"difficulty": 1, "type": "main_course"},
+    "红烧鲫鱼": {"difficulty": 3, "type": "main_course"},
+    "鲫鱼豆腐汤": {"difficulty": 3, "type": "soup"},
+    "豇豆炒肉": {"difficulty": 2, "type": "main_course"},
+    "酸辣土豆丝": {"difficulty": 2, "type": "main_course"},
+    "麻婆豆腐": {"difficulty": 2, "type": "main_course"},
+    "可乐鸡翅": {"difficulty": 2, "type": "main_course"},
+    "红烧排骨": {"difficulty": 3, "type": "main_course"},
+    "土豆炖排骨": {"difficulty": 2, "type": "soup"},
+    "番茄牛腩": {"difficulty": 3, "type": "soup"},
+    "葱烧海参": {"difficulty": 5, "type": "main_course"},
+    # 凉拌/素食
+    "凉拌黄瓜": {"difficulty": 1, "type": "side_dish"},
+    "拍黄瓜": {"difficulty": 1, "type": "side_dish"},
+    "糖拌番茄": {"difficulty": 1, "type": "side_dish"},
+    "老干妈雪糕": {"difficulty": 1, "type": "dark_cuisine"},
+    "板蓝根泡面": {"difficulty": 1, "type": "dark_cuisine"},
+
+    # 新增高级菜谱（难度4-5，需要好食材和厨艺）
+    "黑椒牛排": {"difficulty": 4, "type": "main_course"},
+    "蒜蓉大虾": {"difficulty": 3, "type": "main_course"},
+    "芝士焗饭": {"difficulty": 2, "type": "main_course"},
+    "三文鱼刺身": {"difficulty": 3, "type": "side_dish"},
 }
