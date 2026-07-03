@@ -22,7 +22,7 @@
 | 🥚 **彩蛋去重** | 修复了冰箱里鸡蛋无限重复的 bug |
 | ✅ **认真做菜保底** | AI 非恶搞态度做菜必定提升厨艺和熟练度 |
 | 🔄 **自动开新天** | 本局完成后自动提示并支持一键 `新局` |
-| 🎮 **Operit 插件** | 完整的 Operit 插件包 `shangzhuochifan.js`，支持侧边栏一键启动 |
+| 🎮 **Operit 插件** | 完整的 Operit 插件包 `shangzhuochifan.js`，AI 可通过对话中的 `play` 工具调用游戏引擎 |
 | 🐍 **Python 桥接** | `game_wrapper.py` 提供干净的 Python 引擎调用接口 |
 
 ---
@@ -66,7 +66,7 @@ print(g.cmd('做法 番茄切块，鸡蛋打散先炒盛出，再炒番茄出汁
 
 1. 在 Operit 插件市场安装 `shangzhuochifan` 插件
 2. 从 [GitHub](https://github.com/cookies367/shangzhuochifan) 下载 Python 引擎到 `/sdcard/Download/Operit/data/shangzhuochifan/`
-3. 在侧边栏点击「上桌吃饭」即可开始
+3. AI 在对话中通过 `play` 工具调用游戏，支持指令：`起床`、`看摊`、`买 菜名 数量`、`AI做饭 菜名`、`回家` 等
 
 ---
 
@@ -84,7 +84,7 @@ print(g.cmd('做法 番茄切块，鸡蛋打散先炒盛出，再炒番茄出汁
 ├── game_wrapper.py     # 🆕 Python 桥接（30行）——Operit 插件调用接口
 ├── index.html          # 原版网页入口
 ├── market_mcp_server.py# 原版 MCP 服务器
-├── shangzhuochifan.js  # 🆕 Operit 插件包（120行）——侧边栏启动/工具注册
+├── shangzhuochifan.js  # 🆕 Operit 插件包（120行）——注册 `play` 工具供 AI 调用
 ├── market_save.json    # 存档（自动生成，不上传）
 └── LICENSE             # MIT 协议
 ```
@@ -362,13 +362,13 @@ MarketGame
 ├── _quick_cook()    # 快做：自动拆分步骤、关键时刻暂停
 ├── _serve()         # 端上桌：品相评分、叙事、她的话
 ├── save()/load()    # 存档（JSON）
-├── ChefEngine      # 🆕 AI 厨师系统
-│   ├── cook()      # AI 自由发挥做菜
-│   ├── _get_mood() # 判断心情和烹饪态度
-│   └── _evaluate() # 评价菜品品质
-└── game_wrapper    # 🆕 Operit 插件桥接
-    ├── play()      # 启动游戏
-    └── process()   # 处理指令
+├── ChefEngine       # 🆕 AI 厨师系统
+│   ├── cook()       # AI 自由发挥做菜
+│   ├── _get_mood()  # 判断心情和烹饪态度
+│   └── _evaluate()  # 评价菜品品质
+└── game_wrapper     # 🆕 Operit 插件桥接
+    ├── play()       # 启动游戏
+    └── process()    # 处理指令
 ```
 
 ---
